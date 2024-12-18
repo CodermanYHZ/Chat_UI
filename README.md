@@ -21,13 +21,14 @@ Chat_UI是一个开源的聊天界面工具，旨在为用户提供一个简单�
 - **AI与VSCode代码编辑结合**：集成AI辅助的代码编辑能力。
 - **AI与PS软件结合**：集成并实现一个UI就能完成所有图像工作。
 ## 安装
-请按照以下步骤安装ChatGPTUI：
+请按照以下步骤安装Chat_UI：
 1. 克隆或下载此仓库到本地。
 2. 安装依赖项（根据你的操作系统和开发环境）。
 3. 运行应用程序。
 ## 快速开始
 1. **克隆仓库**：
-```bash\ngit clone https://github.com/CodermanYHZ/Chat_UI.git
+```bash
+git clone https://github.com/CodermanYHZ/Chat_UI.git
 cd Chat_UI
 ```
 2. **安装依赖**：
@@ -46,7 +47,7 @@ python api.py
 index.html
 ```
 ## 贡献
-欢迎大家参与到ChatGPTUI的开发中来。以下是几种贡献方式：
+欢迎大家参与到Chat_UI的开发中来。以下是几种贡献方式：
 - **提交issue**：如果你发现了bug或有新的功能建议，请提交issue。
 - **提交pull request**：如果你有改进或新功能的代码，请提交pull request。
 - **文档贡献**：帮助我们完善项目的文档。
