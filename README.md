@@ -2,6 +2,11 @@
 ## 简介
 ChatGPTUI是一个开源的聊天界面工具，旨在为用户提供一个简单、易用的界面来与市面上大部分的大模型API进行交互。本项目完全开源，所有聊天数据本地化存储且不加密，确保用户隐私安全。目前，该项目主要面向个人自用，不包含用户模块。
 ![Chat_UI](https://github.com/CodermanYHZ/Chat_UI/blob/main/image/mainUI.png)
+暗黑模式
+![Chat_UI_dark](https://github.com/CodermanYHZ/Chat_UI/blob/main/image/mainUI_dark.png)
+设置界面
+![Chat_UI_dark](https://github.com/CodermanYHZ/Chat_UI/blob/main/image/subUI.png)
+这不是最终的UI,只是为了测试代码用的，基础功能测试完成后会进行UI美化
 ## 特性
 **兼容性**：支持市面上大部分的大模型API。
 1. **简单易用**：界面简洁，开箱即用。
