@@ -1,4 +1,4 @@
-# Chat_UI - 开源聊天界面工具
+# Chat_UI - 开源多模态聊天界面工具
 ## 简介
 Chat_UI是一个开源的聊天界面工具，旨在为用户提供一个简单、易用的界面来与市面上大部分的大模型API进行交互。本项目完全开源，所有聊天数据本地化存储且不加密，确保用户隐私安全。目前，该项目主要面向个人自用，不包含用户模块。
 ![Chat_UI](https://github.com/CodermanYHZ/Chat_UI/blob/main/image/mainUI.png)
