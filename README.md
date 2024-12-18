@@ -57,5 +57,4 @@ index.html
 - **微信**：shwuzih666
 让我们共同打造一个强大的多模态AI平台！
 ## 星星
-## Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=CodermanYHZ/Chat_UI&type=Date)](https://star-history.com/#CodermanYHZ/Chat_UI&Date)
