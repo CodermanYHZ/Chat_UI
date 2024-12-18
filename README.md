@@ -1,6 +1,6 @@
-# ChatGPTUI - 开源聊天界面工具
+# Chat_UI - 开源聊天界面工具
 ## 简介
-ChatGPTUI是一个开源的聊天界面工具，旨在为用户提供一个简单、易用的界面来与市面上大部分的大模型API进行交互。本项目完全开源，所有聊天数据本地化存储且不加密，确保用户隐私安全。目前，该项目主要面向个人自用，不包含用户模块。
+Chat_UI是一个开源的聊天界面工具，旨在为用户提供一个简单、易用的界面来与市面上大部分的大模型API进行交互。本项目完全开源，所有聊天数据本地化存储且不加密，确保用户隐私安全。目前，该项目主要面向个人自用，不包含用户模块。
 ![Chat_UI](https://github.com/CodermanYHZ/Chat_UI/blob/main/image/mainUI.png)
 暗黑模式
 ![Chat_UI_dark](https://github.com/CodermanYHZ/Chat_UI/blob/main/image/mainUI_dark.png)
@@ -58,3 +58,4 @@ index.html
 让我们共同打造一个强大的多模态AI平台！
 ## 星星
 [![Star History Chart](https://api.star-history.com/svg?repos=CodermanYHZ/Chat_UI&type=Date)](https://star-history.com/#CodermanYHZ/Chat_UI&Date)
+## Chat_UI 期待你的加入，一起构建更智能、更便捷的 AI 交互体验！ 🚀
