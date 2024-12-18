@@ -55,7 +55,6 @@ index.html
 如果你有任何问题或建议，请通过以下方式联系我们：
 - **邮箱**：1944793981@qq.com
 - **微信**：shwuzih666
-让我们共同打造一个强大的多模态AI平台！
 ## 星星
 [![Star History Chart](https://api.star-history.com/svg?repos=CodermanYHZ/Chat_UI&type=Date)](https://star-history.com/#CodermanYHZ/Chat_UI&Date)
 ## Chat_UI 期待你的加入，一起构建更智能、更便捷的 AI 交互体验！ 🚀
