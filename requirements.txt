@@ -1,0 +1,13 @@
+FastAPI
+httpx
+pydantic
+fastapi-middleware-cors
+python-multipart
+typing
+uvicorn
+logging
+os
+shutil
+json
+uuid
+

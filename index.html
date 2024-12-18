@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天界面</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <!-- 建聊天按钮 -->
+            <button class="new-chat-btn">
+                <span>新建聊天</span>
+            </button>
+            
+            <!-- 聊天历史容器 -->
+            <div class="chat-history-container">
+                <div class="chat-list"></div>
+            </div>
+            
+            <!-- 添加设置按钮 -->
+            <button class="settings-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <span>设置</span>
+            </button>
+        </div>
+
+        <!-- 主聊天区域 -->
+        <div class="chat-area">
+            <!-- 模型选择区域 -->
+            <div class="model-selection">
+                <select id="modelSelect" title="选择模型">
+                    <option value="">加载中...</option>
+                </select>
+            </div>
+            <!-- 消息区域 -->
+            <div class="messages"></div>
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <div class="input-box">
+                    <!-- 文件上传按钮移到这里 -->
+                    <div class="file-upload">
+                        <input type="file" id="fileUpload" accept="image/*">
+                        <label for="fileUpload">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                                <path d="M16 5h6v6"></path>
+                                <path d="M8 12l8-8"></path>
+                            </svg>
+                        </label>
+                    </div>
+                    <textarea placeholder="输入消息..." rows="1"></textarea>
+                    <button class="send-btn">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右键菜单 -->
+    <div class="context-menu">
+        <div class="context-menu-item rename">重命名</div>
+        <div class="context-menu-item delete">删除</div>
+    </div>
+
+    <!-- 设置对话框 -->
+    <div class="settings-dialog" style="display: none;">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h3>设置</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="settings-body">
+                <div class="settings-item">
+                    <label>主题</label>
+                    <select id="themeSelect">
+                        <option value="light">浅色</option>
+                        <option value="dark">深色</option>
+                    </select>
+                </div>
+                <div class="settings-item">
+                    <label>模型管理</label>
+                    <div class="model-list">
+                        <!-- 这里会动态填充模型列表 -->
+                    </div>
+                    <button class="add-model-btn">添加模型</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加模型对话框 -->
+    <div class="add-model-dialog" style="display: none;">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h3>添加自定义模型</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="settings-body">
+                <div class="form-item">
+                    <label>模型ID</label>
+                    <input type="text" id="modelId" placeholder="请输入模型ID">
+                </div>
+                <div class="form-item">
+                    <label>模型名称</label>
+                    <input type="text" id="modelName" placeholder="请输入模型名称">
+                </div>
+                <div class="form-item">
+                    <label>API URL</label>
+                    <input type="text" id="modelUrl" placeholder="请输入API地址">
+                </div>
+                <div class="form-item">
+                    <label>API Key</label>
+                    <input type="password" id="modelKey" placeholder="请输入API密钥">
+                </div>
+                <div class="form-item">
+                    <label>Temperature: <span id="temperatureValue">0.7</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="modelTemperature" 
+                            min="0.5" max="1" step="0.1" 
+                            value="0.7"
+                            class="slider">
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>Max Tokens: <span id="maxTokensValue">1024</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="modelMaxTokens" 
+                            min="1024" max="4096" step="512" 
+                            value="1024"
+                            class="slider">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="cancel-btn">取消</button>
+                    <button class="save-model-btn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="modelConfig.js"></script>
+    <script src="chatHistory.js"></script>
+    <script src="apiConfig.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
