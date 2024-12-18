@@ -1,0 +1,45 @@
+{
+  "models": [
+    {
+      "id": "glm-4v-flash",
+      "name": "GLM-4V-Flash",
+      "description": "智谱AI视觉语言模型",
+      "url": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      "key": "",
+      "temperature": 0.7,
+      "maxTokens": 1024,
+      "provider": "zhipu"
+    },
+    {
+      "id": "Qwen/QwQ-32B-Preview",
+      "name": "Qwen/QwQ-32B-Preview",
+      "url": "https://api.siliconflow.cn/v1/chat/completions",
+      "key": "",
+      "description": "自定义模型: Qwen/QwQ-32B-Preview",
+      "temperature": 0.7,
+      "maxTokens": 1024,
+      "provider": "custom"
+    },
+    {
+      "id": "glm-4-flash",
+      "name": "GLM-4-Flash",
+      "url": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      "key": "",
+      "description": "自定义模型: GLM-4-Flash",
+      "temperature": 0.7,
+      "maxTokens": 4095,
+      "provider": "custom"
+    },
+    {
+      "id": "grok-beta",
+      "name": "Grok-beta",
+      "url": "https://api.x.ai/v1/chat/completions",
+      "key": "",
+      "temperature": 0.7,
+      "maxTokens": 2048,
+      "description": "自定义模型: Grok-beta",
+      "provider": "custom"
+    }
+  ],
+  "defaultModel": "glm-4v-flash"
+}
