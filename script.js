@@ -93,6 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     modelManager = new ModelManager();
     chatManager = new ChatManager();
     
+    // 初始化发送按钮状态
+    initializeSendButtons();
+    
     // 新建聊天按钮事件
     if (newChatBtn) {
         console.log('添加新建聊天按钮事件监听器');
@@ -374,9 +377,14 @@ class ChatManager {
             
             chatList.appendChild(chatItem);
         });
-
-        // 更新消息显示
-        const messagesContainer = document.querySelector('.messages');
+        // 根据模式选择消息容器
+        const isDocMode = document.querySelector('.mode-btn[data-mode="doc"]').classList.contains('active');
+        
+        const messagesContainer = isDocMode ? 
+            document.querySelector('.doc-messages') : 
+            document.querySelector('.chat-mode-container .messages');
+        
+        if (!messagesContainer) return;
         messagesContainer.innerHTML = '';
         
         const currentChat = this.getCurrentChat();
@@ -394,7 +402,7 @@ class ChatManager {
                 }
 
                 let contentDiv = document.createElement('div');
-                // 如果内容是字符串
+                // 如果内容是字符
                 if(typeof msg.content === 'string'){
                     try{
                         // 检查是否是用户消息且包含大量代码特征
@@ -679,7 +687,7 @@ document.getElementById('fileUpload').addEventListener('change', function(e) {
         };
         preview.appendChild(removeBtn);
 
-        // 将预览添加到输入框上方
+        // 将预览加到输入框上方
         const inputArea = document.querySelector('.input-area');
         inputArea.insertBefore(preview, inputArea.firstChild);
     }
@@ -700,3 +708,146 @@ document.getElementById('modelTemperature').addEventListener('input', function(e
 document.getElementById('modelMaxTokens').addEventListener('input', function(e) {
     document.getElementById('maxTokensValue').textContent = e.target.value;
 });
+
+// 添加模式切换按钮的事件监听
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        if (mode === 'doc') {
+            document.querySelector('.chat-mode-container').style.display = 'none';
+            document.querySelector('.doc-mode-container').style.display = 'block';
+            document.querySelector('.doc-toolbar').style.display = 'flex';
+            document.querySelector('.doc-chat-area').style.display = 'flex';
+            
+            const docSendBtn = document.querySelector('.doc-chat-area .send-btn');
+            const docTextarea = document.querySelector('.doc-chat-area textarea');
+            
+            docSendBtn.onclick = async () => {
+                const message = docTextarea.value.trim();
+                if (message) {
+                    chatManager.addMessage(message, true);
+                    docTextarea.value = '';
+                    
+                    try {
+                        const response = await sendMessageToAPI(message);
+                        if (response && response.choices && response.choices[0]) {
+                            const assistantMessage = response.choices[0].message.content;
+                            chatManager.addMessage(assistantMessage, false);
+                        }
+                    } catch (error) {
+                        console.error('发送消息失败:', error);
+                        chatManager.addMessage('抱歉，发生了错误，请稍后重试。', false);
+                    }
+                }
+            };
+            
+            document.querySelector('.chat-mode-container .send-btn').onclick = null;
+        } else {
+            document.querySelector('.chat-mode-container').style.display = 'flex';
+            document.querySelector('.doc-mode-container').style.display = 'none';
+            document.querySelector('.doc-toolbar').style.display = 'none';
+            document.querySelector('.doc-chat-area').style.display = 'none';
+            
+            const chatSendBtn = document.querySelector('.chat-mode-container .send-btn');
+            const chatTextarea = document.querySelector('.chat-mode-container textarea');
+            
+            chatSendBtn.onclick = async () => {
+                const message = chatTextarea.value.trim();
+                const fileInput = document.getElementById('fileUpload');
+                const file = fileInput?.files[0];
+                
+                if (!message && !file) return;
+                
+                try {
+                    chatManager.addMessage(message, true, file);
+                    chatTextarea.value = '';
+                    if (fileInput) fileInput.value = '';
+                    
+                    const response = await sendMessageToAPI(message, file);
+                    if (response && response.choices && response.choices[0]) {
+                        const assistantMessage = response.choices[0].message.content;
+                        chatManager.addMessage(assistantMessage, false);
+                    }
+                } catch (error) {
+                    console.error('发送消息失败:', error);
+                    chatManager.addMessage('抱歉，发生了错误，请稍后重试。', false);
+                }
+            };
+            
+            document.querySelector('.doc-chat-area .send-btn').onclick = null;
+        }
+    });
+});
+
+// 初始化发送按钮状态的函数
+function initializeSendButtons() {
+    // 激活聊天模式的发送按钮
+    const chatSendBtn = document.querySelector('.chat-mode-container .send-btn');
+    const chatTextarea = document.querySelector('.chat-mode-container textarea');
+    
+    // 初始化文件上传预览功能
+    const fileInput = document.getElementById('fileUpload');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 如果是图片，创建预览
+            if (file.type.startsWith('image/')) {
+                const objectUrl = URL.createObjectURL(file);
+                
+                // 创建预览元素
+                const preview = document.createElement('div');
+                preview.className = 'file-preview';
+                
+                const img = document.createElement('img');
+                img.src = objectUrl;
+                preview.appendChild(img);
+                
+                // 添加删除按钮
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-file';
+                removeBtn.textContent = '×';
+                removeBtn.onclick = () => {
+                    preview.remove();
+                    e.target.value = ''; // 清空文件选择
+                };
+                preview.appendChild(removeBtn);
+                
+                // 将预览加到输入框上方
+                const inputArea = document.querySelector('.chat-mode-container .input-area');
+                inputArea.insertBefore(preview, inputArea.firstChild);
+            }
+        });
+    }
+    
+    chatSendBtn.onclick = async () => {
+        const message = chatTextarea.value.trim();
+        const fileInput = document.getElementById('fileUpload');
+        const file = fileInput?.files[0];
+        
+        if (!message && !file) return;
+        
+        try {
+            chatManager.addMessage(message, true, file);
+            chatTextarea.value = '';
+            if (fileInput) fileInput.value = '';
+            
+            const response = await sendMessageToAPI(message, file);
+            if (response && response.choices && response.choices[0]) {
+                const assistantMessage = response.choices[0].message.content;
+                chatManager.addMessage(assistantMessage, false);
+            }
+        } catch (error) {
+            console.error('发送消息失败:', error);
+            chatManager.addMessage('抱歉，发生了错误，请稍后重试。', false);
+        }
+    };
+    
+    // 禁用文档模式的发送按钮
+    const docSendBtn = document.querySelector('.doc-chat-area .send-btn');
+    docSendBtn.onclick = null;
+}
