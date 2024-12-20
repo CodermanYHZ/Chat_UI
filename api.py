@@ -52,8 +52,7 @@ class ModelConfig(BaseModel):
     models: list
     defaultModel: str
 
-# 内存存储对话历史（简单示例，生产环境不推荐）
-chat_histories = {}
+# 每个请求独立处理，不保存历史记录
 
 async def send_message_to_model(request_data:ChatRequest):
         logger.info("开始处理模型请求")
@@ -66,7 +65,7 @@ async def send_message_to_model(request_data:ChatRequest):
             # 记录请求数据（去除敏感信息）
             safe_request = {
                 "model": request_data.model,
-                "messages": request_data.messages,
+                "messages": [msg.dict() for msg in request_data.messages],
                 "temperature": request_data.temperature,
                 "max_tokens": request_data.max_tokens
             }
@@ -77,7 +76,7 @@ async def send_message_to_model(request_data:ChatRequest):
                 client.timeout = 30.0
                 response = await client.post(url, 
                     json={
-                        "messages": request_data.messages,
+                        "messages": [msg.dict() for msg in request_data.messages],
                         "model": request_data.model,
                         "temperature": request_data.temperature,
                         "max_tokens": request_data.max_tokens
@@ -117,18 +116,7 @@ async def chat_completion(request_data: ChatRequest):
            session_id = uuid.uuid4()
         if not session_id:
            session_id = uuid.uuid4()
-        if session_id not in chat_histories:
-          chat_histories[session_id] = []
-        messages = []
-        if request_data.messages and len(request_data.messages):
-            for msg in request_data.messages:
-                messages.append(msg.dict())
-        chat_histories[session_id].extend(messages)
-        request_data.messages = chat_histories[session_id]
-        logger.info(f"处理会话 {session_id}")
         response = await send_message_to_model(request_data)
-        if response and response.get('choices') and len(response.get('choices')):
-            chat_histories[session_id].append({'role':'assistant', 'content': response.get('choices')[0].get('message').get('content')})
         return response
     except Exception as e:
         logger.error(f"处理文本消息请求失败: {str(e)}")
@@ -144,17 +132,7 @@ async def chat_vision(request_data: ChatRequest):
           session_id = uuid.uuid4()
        if not session_id:
           session_id = uuid.uuid4()
-       if session_id not in chat_histories:
-         chat_histories[session_id] = []
-       messages = []
-       if request_data.messages and len(request_data.messages):
-           for msg in request_data.messages:
-                messages.append(msg.dict())
-       chat_histories[session_id].extend(messages)
-       request_data.messages = chat_histories[session_id]
        response = await send_message_to_model(request_data)
-       if response and response.get('choices') and len(response.get('choices')):
-           chat_histories[session_id].append({'role':'assistant', 'content': response.get('choices')[0].get('message').get('content')})
        return response
     except Exception as e:
         logger.error(f"处理图片消息请求失败: {str(e)}")
