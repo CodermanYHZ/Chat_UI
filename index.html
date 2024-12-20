@@ -37,31 +37,195 @@
                 <select id="modelSelect" title="选择模型">
                     <option value="">加载中...</option>
                 </select>
+                <!-- 添加文档编辑区域切换按钮 -->
+                <div class="mode-switch">
+                    <button class="mode-btn active" data-mode="chat">聊天模式</button>
+                    <button class="mode-btn" data-mode="doc">文档模式</button>
+                </div>
             </div>
-            <!-- 消息区域 -->
-            <div class="messages"></div>
-            <!-- 输入区域 -->
-            <div class="input-area">
-                <div class="input-box">
-                    <!-- 文件上传按钮移到这里 -->
-                    <div class="file-upload">
-                        <input type="file" id="fileUpload" accept="image/*">
-                        <label for="fileUpload">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
-                                <path d="M16 5h6v6"></path>
-                                <path d="M8 12l8-8"></path>
-                            </svg>
-                        </label>
+
+            <!-- 文档模式布局 -->
+            <div class="doc-mode-container" style="display: none;">
+                <!-- 文档编辑区域 -->
+                <div class="doc-area">
+                    <!-- 添加格式化工具栏 -->
+                    <div class="doc-toolbar" style="display: none;">
+                        <div class="toolbar-group">
+                            <div class="save-dropdown">
+                                <button class="toolbar-btn save-doc-btn" title="保存文档">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    <span>保存</span>
+                                    <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="save-options">
+                                    <button class="save-option" data-format="html">网页格式 (HTML)</button>
+                                    <button class="save-option" data-format="docx">Word文档 (DOCX)</button>
+                                    <button class="save-option" data-format="pdf">PDF文档 (PDF)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-command="undo" title="撤销">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M3 7v6h6"></path>
+                                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" data-command="redo" title="重做">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 7v6h-6"></path>
+                                    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-group">
+                            <select class="toolbar-select font-size" title="字体大小">
+                                <option value="72">初号</option>
+                                <option value="48">小初</option>
+                                <option value="36">一号</option>
+                                <option value="32">小一</option>
+                                <option value="28">二号</option>
+                                <option value="24">小二</option>
+                                <option value="20">三号</option>
+                                <option value="18">小三</option>
+                                <option value="16" selected>四号</option>
+                                <option value="14">小四</option>
+                                <option value="12">五号</option>
+                                <option value="10">小五</option>
+                                <option value="8">六号</option>
+                                <option value="6">小六</option>
+                                <option value="5">七号</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn color-picker" title="文字颜色" style="padding: 4px 8px;">
+                                <input type="color" class="color-input">
+                                <span class="color-preview">A</span>
+                                <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn highlight-picker" title="突出显示" style="padding: 4px 8px;">
+                                <input type="color" class="highlight-input" value="#ffeb3b">
+                                <span class="highlight-preview">A</span>
+                                <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-command="bold" title="加粗">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" data-command="italic" title="斜体">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <line x1="19" y1="4" x2="10" y2="4"></line>
+                                    <line x1="14" y1="20" x2="5" y2="20"></line>
+                                    <line x1="15" y1="4" x2="9" y2="20"></line>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn strike-btn" title="删除线">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <text x="4" y="18" font-size="14" font-weight="bold">a</text>
+                                    <text x="14" y="18" font-size="14" font-weight="bold">b</text>
+                                    <line x1="4" y1="12" x2="20" y2="12" stroke-width="2"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-command="subscript" title="下标">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 19l-7-8 7-8M5 19l7-8-7-8"/>
+                                    <path d="M20 20h-4v-1l2-2v-1h-2v-1h4v1l-2 2v1h2z"/>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" data-command="superscript" title="上标">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 19l-7-8 7-8M5 19l7-8-7-8"/>
+                                    <path d="M20 8h-4V7l2-2V4h-2V3h4v1l-2 2v1h2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-group toolbar-right">
+                            <button class="toolbar-btn upload-doc-btn" title="上传文档">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </button>
+                            <div class="doc-settings-menu">
+                                <button class="settings-item upload-doc-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                                    </svg>
+                                    上传文档
+                                </button>
+                                <button class="settings-item reupload-doc-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M21 2v6h-6"></path>
+                                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                                        <path d="M3 22v-6h6"></path>
+                                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                                    </svg>
+                                    重新上传
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <textarea placeholder="输入消息..." rows="1"></textarea>
-                    <button class="send-btn">发送</button>
+                    <div class="doc-content"></div>
+                </div>
+                <!-- 文档模式的聊天区域 -->
+                <div class="doc-chat-area">
+                    <div class="messages doc-messages"></div>
+                    <div class="input-area doc-input-area">
+                        <div class="input-box">
+                            <textarea placeholder="输入修改建议..." rows="1"></textarea>
+                            <button class="send-btn">发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 聊天模式的消息和输入区域 -->
+            <div class="chat-mode-container">
+                <!-- 消息区域 -->
+                <div class="messages"></div>
+                <!-- 输入区域 -->
+                <div class="input-area">
+                    <div class="input-box">
+                        <!-- 文件上传按钮 -->
+                        <div class="file-upload">
+                            <input type="file" id="fileUpload" accept="image/*">
+                            <label for="fileUpload">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                                    <path d="M16 5h6v6"></path>
+                                    <path d="M8 12l8-8"></path>
+                                </svg>
+                            </label>
+                        </div>
+                        <textarea placeholder="输入消息..." rows="1"></textarea>
+                        <button class="send-btn">发送</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 右键菜单 -->
+    <!-- 右菜单 -->
     <div class="context-menu">
         <div class="context-menu-item rename">重命名</div>
         <div class="context-menu-item delete">删除</div>
@@ -144,9 +308,12 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="modelConfig.js"></script>
     <script src="chatHistory.js"></script>
     <script src="apiConfig.js"></script>
+    <script src="docHandler.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
