@@ -114,7 +114,7 @@ class DocHandler {
                 const color = this.getSelectionColor(range);
                 const bgColor = this.getSelectionBackground(range);
                 if (color) {
-                    colorInput.value = color;
+                    colorInput.value = this.rgbToHex(color);
                     colorPreview.style.color = color;
                 }
                 if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {

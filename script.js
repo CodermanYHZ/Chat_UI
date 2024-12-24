@@ -30,17 +30,29 @@ marked.setOptions({
             try {
                 const result = hljs.highlightAuto(code);
                 language = result.language;
-                code = result.value
+                code = result.value;
             } catch (__) {}
-        }else{
-                try {
+        } else {
+            try {
                 code = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
-            } catch (__) { }
+            } catch (__) {}
         }
-        if(language){
-                return `<div class="code-block-container"><div class="code-language">${language}</div><pre><code class="hljs">${code}</code></pre></div>`;
-        }else{
-            return `<div class="code-block-container"><pre><code class="hljs">${code}</code></pre></div>`
+        
+        if (language) {
+            return `<div class="code-block-container">
+                <div class="code-header">
+                    <span class="code-language">${language}</span>
+                    <button class="copy-button" onclick="copyCode(this)">复制代码</button>
+                </div>
+                <pre><code class="hljs">${code}</code></pre>
+            </div>`;
+        } else {
+            return `<div class="code-block-container">
+                <div class="code-header">
+                    <button class="copy-button" onclick="copyCode(this)">复制代码</button>
+                </div>
+                <pre><code class="hljs">${code}</code></pre>
+            </div>`;
         }
     }
 });
@@ -54,7 +66,7 @@ function initializeModelSelect() {
     const providerBadge = document.getElementById('providerBadge');
     modelSelect.innerHTML = '';
     
-    // 直接使用固定的模型列表
+    // 直接使用
     const models = [
         {
             id: "glm-4v-flash",
@@ -98,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 新建聊天按钮事件
     if (newChatBtn) {
-        console.log('添加新建聊天按钮事件监听器');
+        console.log('添加新建聊天按钮事��监听器');
         newChatBtn.onclick = () => {
             console.log('点击新建聊天按钮');
             chatManager.createNewChat();
@@ -236,6 +248,18 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.style.display = 'none';
         }
     });
+
+    // 添加侧边栏切换功能
+    const toggleBtn = document.querySelector('.toggle-sidebar-btn');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            // 更新按钮提示文本
+            toggleBtn.title = sidebar.classList.contains('collapsed') ? '展开侧边栏' : '收起侧边栏';
+        });
+    }
 });
 
 // 加聊天管理类
@@ -281,7 +305,7 @@ class ChatManager {
     async addMessage(content, isUser = true, file = null) {
         const currentChat = this.getCurrentChat();
         if (currentChat) {
-            // 创建基础消息对象
+            // 创建基本���息对象
             const message = {
                 content,
                 isUser,
@@ -377,7 +401,7 @@ class ChatManager {
             
             chatList.appendChild(chatItem);
         });
-        // 根据模式选择消息容器
+        // 模式选择消息容器
         const isDocMode = document.querySelector('.mode-btn[data-mode="doc"]').classList.contains('active');
         
         const messagesContainer = isDocMode ? 
@@ -392,73 +416,234 @@ class ChatManager {
             currentChat.messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${msg.isUser ? 'user-message' : 'assistant-message'}`;
-
+                
+                // 创建消息内容容器
+                const contentContainer = document.createElement('div');
+                contentContainer.className = 'message-content';
+                
+                // 如果消息包含图片，先渲染图片
                 if (msg.file && msg.file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = msg.file.url;
-                    img.style.maxWidth = '200px';
-                    img.style.marginBottom = '8px';
-                    messageDiv.appendChild(img);
+                    const imgElement = document.createElement('img');
+                    imgElement.src = msg.file.url;
+                    imgElement.className = 'message-image';
+                    contentContainer.appendChild(imgElement);
                 }
 
-                let contentDiv = document.createElement('div');
-                // 如果内容是字符
-                if(typeof msg.content === 'string'){
-                    try{
-                        // 检查是否是用户消息且包含大量代码特征
-                        if (msg.isUser && (
-                            msg.content.includes('```') ||
-                            (msg.content.match(/[{}<>]/g) || []).length > 5
-                        )) {
-                            // 作为纯文本代码显示
-                            contentDiv.className = 'user-code-message';
-                            contentDiv.textContent = msg.content;
-                        } else if (!msg.isUser) {
-                            // AI 回复使用 markdown 解析
-                            contentDiv.innerHTML = marked.parse(msg.content);
-                        } else {
-                            // 普通用户消息
-                            contentDiv.textContent = msg.content;
-                        }
-                        messageDiv.appendChild(contentDiv);
-                    }catch(error){
-                        console.error('Markdown解析失败:', error);
-                        contentDiv.textContent = msg.content;
-                        messageDiv.appendChild(contentDiv);
+                // 渲染消息文本内容
+                if (msg.content) {
+                    const textElement = document.createElement('div');
+                    textElement.className = 'message-text';
+                    if (msg.isUser) {
+                        textElement.textContent = msg.content;
+                    } else {
+                        textElement.innerHTML = marked.parse(msg.content);
+                    }
+                    contentContainer.appendChild(textElement);
                 }
-                }else{
-                    // 如果是图片
-                    contentDiv.textContent = msg.content;
-                    messageDiv.appendChild(contentDiv);
-                }
+
+                // 将内容容器添加到消息div
+                messageDiv.appendChild(contentContainer);
                 messagesContainer.appendChild(messageDiv);
-        });
 
-            // 代码块复制按钮事件监听
-            setTimeout(() => {
-            messagesContainer.querySelectorAll('pre code').forEach(codeBlock => {
+                // 如果是助手消息且有网络搜索结果，在消息内容后渲染搜索结果
+                if (!msg.isUser && msg.web_search) {
+                    const searchResultsDiv = document.createElement('div');
+                    searchResultsDiv.className = 'search-results';
+                    searchResultsDiv.innerHTML = `
+                        <div class="search-results-header">参考文献：</div>
+                        <div class="search-result-item">
+                            ${msg.web_search.map((result, index) => `
+                                <div class="result-row">
+                                    <span class="result-ref">${result.refer}</span>
+                                    <a href="${result.icon}" target="_blank" class="source-link">
+                                        <img src="${result.icon}" class="source-icon" alt="${result.media}"/>
+                                    </a>
+                                    <span class="result-media">${result.media}</span>
+                                    <a href="${result.link}" target="_blank" class="result-link">
+                                        ${result.title}
+                                    </a>
+                                    <details class="result-details">
+                                        <summary>展开内容</summary>
+                                        <div class="result-content">
+                                            ${result.content}
+                                        </div>
+                                    </details>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    messagesContainer.appendChild(searchResultsDiv);
+                }
+
+                // 为新渲染的代码块添加复制按钮
+                messageDiv.querySelectorAll('pre code').forEach(codeBlock => {
+                    // 检查是否已经有复制按钮
+                    if (!codeBlock.nextSibling || !codeBlock.nextSibling.classList?.contains('copy-code-btn')) {
+                        const copyButton = document.createElement('button');
+                        copyButton.textContent = '复制';
+                        copyButton.classList.add('copy-code-btn');
+                        
+                        // 将按钮插入到代码块后面
+                        codeBlock.parentNode.insertBefore(copyButton, codeBlock.nextSibling);
+                        
+                        // 添加点击事件
+                        copyButton.onclick = () => {
+                            navigator.clipboard.writeText(codeBlock.textContent)
+                                .then(() => {
+                                    copyButton.textContent = '复制成功!';
+                                    setTimeout(() => {
+                                        copyButton.textContent = '复制';
+                                    }, 2000);
+                                })
+                                .catch(err => {
+                                    console.error('复��失败:', err);
+                                    copyButton.textContent = '复制失败!';
+                                });
+                        };
+                    }
+                });
+            });
+        }
+    }
+
+    async handleStreamResponse(response) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+        let contentDiv = null;
+        let webSearchResults = null;  // 存储搜索结果
+        let hasDisplayedSearchResults = false;
+
+        // 在开始处理响应前就清除预览
+        const existingPreview = document.querySelector('.file-preview');
+        if (existingPreview) {
+            existingPreview.remove();
+        }
+        // 清除文件输入
+        document.getElementById('fileUpload').value = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(5));
+                        
+                        // 处理网络搜索结果
+                        if (data.web_search && !hasDisplayedSearchResults) {
+                            hasDisplayedSearchResults = true;
+                            webSearchResults = data.web_search;  // 保存搜索结果
+                            // 显示搜索结果
+                            const searchResultsDiv = document.createElement('div');
+                            searchResultsDiv.className = 'search-results';
+                            // ... 其他显示代码 ...
+                        }
+                        
+                        // 处理模型回复
+                        if (data.choices && data.choices[0].delta?.content) {
+                            const content = data.choices[0].delta.content;
+                            fullContent += content;
+                            // ... 其他显示代码 ...
+                        }
+                    } catch (error) {
+                        console.error('解析响应失败:', error);
+                    }
+                }
+            }
+        }
+
+        // 保存完整的消息
+        const currentChat = this.getCurrentChat();
+        if (currentChat) {
+            const message = {
+                content: fullContent,
+                isUser: false,
+                timestamp: Date.now(),
+                web_search: webSearchResults  // 将搜索结果添加��消息对象
+            };
+            
+            currentChat.messages.push(message);
+            this.saveChats();  // 保存到 localStorage
+            
+            // 渲染消息
+            this.renderMessage(message);
+        }
+        
+        return;
+    }
+
+    // 修改 renderMessage 方法以支持显示 web_search
+    renderMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${message.isUser ? 'user-message' : 'assistant-message'}`;
+        
+        // 如果是助手消息且有网络搜索结果，先渲染搜索结果
+        if (!message.isUser && message.web_search) {
+            const searchResultsDiv = document.createElement('div');
+            searchResultsDiv.className = 'search-results';
+            searchResultsDiv.innerHTML = `
+                <div class="search-results-header">参考文献：</div>
+                <div class="search-results-container">
+                    ${message.web_search.map(result => `
+                        <div class="search-result-item">
+                            <div class="result-header">
+                                <span class="result-ref">[${result.refer}]</span>
+                                <a href="${result.link}" target="_blank" class="result-title">
+                                    ${result.title}
+                                </a>
+                            </div>
+                            <div class="result-source">
+                                <span class="result-media">${result.media}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            messagesContainer.appendChild(searchResultsDiv);
+        }
+        
+        // 渲染消息内容
+        if (message.isUser) {
+            messageDiv.textContent = message.content;
+        } else {
+            messageDiv.innerHTML = marked.parse(message.content);
+            
+            // 为新渲染的代码块添加复制按钮
+            messageDiv.querySelectorAll('pre code').forEach(codeBlock => {
+                // 检查是否已经有复制按钮
+                if (!codeBlock.nextSibling || !codeBlock.nextSibling.classList?.contains('copy-code-btn')) {
                     const copyButton = document.createElement('button');
                     copyButton.textContent = '复制';
                     copyButton.classList.add('copy-code-btn');
+                    
+                    // 将按钮插入到代码块后面
                     codeBlock.parentNode.insertBefore(copyButton, codeBlock.nextSibling);
-
-                    copyButton.addEventListener('click', () => {
-                    navigator.clipboard.writeText(codeBlock.innerText)
+                    
+                    // 添加点击事件
+                    copyButton.onclick = () => {
+                        navigator.clipboard.writeText(codeBlock.textContent)
                             .then(() => {
-                            copyButton.textContent = '复制成功!';
-                            setTimeout(() => {
-                                copyButton.textContent = '复制';
-                            }, 1000);
+                                copyButton.textContent = '复制成功!';
+                                setTimeout(() => {
+                                    copyButton.textContent = '复制';
+                                }, 2000);
                             })
                             .catch(err => {
-                            console.error('复制失败', err);
-                            copyButton.textContent = '复制失败!';
+                                console.error('复制失败:', err);
+                                copyButton.textContent = '复制失败!';
                             });
-                });
+                    };
+                }
             });
-        },0);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
 
@@ -539,7 +724,7 @@ class ThemeManager {
 // 初始化主题管理器
 let themeManager;
 
-// 设置按钮点击事件
+// 设置按钮点击事���
 document.querySelector('.settings-btn').addEventListener('click', () => {
     document.querySelector('.settings-dialog').style.display = 'flex';
     modelManager.renderModelList();
@@ -566,14 +751,30 @@ document.addEventListener('DOMContentLoaded', () => {
     themeManager = new ThemeManager();
 });
 
-async function sendMessageToAPI(content, file = null) {
+// 定义搜索提示模板
+const SEARCH_PROMPT = `
+# 以下是来自互联网的信息：
+{search_result}
+
+# 当前日期: ${new Date().toISOString().split('T')[0]}
+
+# 要求：
+1. 仅使用上述参考信息回答问题
+2. 每个陈述必须在句末标注来源，使用[ref_序号]格式
+3. 如果信息不足，告知用户"抱歉，没有找到相关信息"
+4. 保持回答的准确性和时效性
+`;
+
+async function sendMessageToAPI(message, file = null,chatSendBtn) {
     try {
         const selectedModel = modelSelect.value;
-        // 获取选中模型的配置
         const modelConfig = modelManager.models.find(m => m.id === selectedModel);
         if (!modelConfig) {
             throw new Error('未找到模型配置');
         }
+
+        // 检查是否启用了网络搜索
+        const webSearchEnabled = document.getElementById('searchToggle').checked;
 
         const historyMessages = chatHistoryManager.getSessionMessages(
             chatManager.currentChatId,
@@ -581,6 +782,7 @@ async function sendMessageToAPI(content, file = null) {
         );
 
         let messages = [...historyMessages];
+        let endpoint;
         
         if (file) {
             // 处理图片消息
@@ -591,12 +793,12 @@ async function sendMessageToAPI(content, file = null) {
                     {
                         type: "image_url",
                         image_url: {
-                            url: base64Image
+                            url: `data:${file.type};base64,${base64Image}`
                         }
                     },
                     {
                         type: "text",
-                        text: content || "图里有什么？"
+                        text: message || "图里有什么？"
                     }
                 ]
             });
@@ -604,10 +806,9 @@ async function sendMessageToAPI(content, file = null) {
             // 使用视觉API
             endpoint = '/chat/vision';
         } else {
-            // 处理文本消息
             messages.push({
                 role: "user",
-                content: content
+                content: message
             });
             endpoint = '/chat/completions';
         }
@@ -617,26 +818,169 @@ async function sendMessageToAPI(content, file = null) {
             messages: messages,
             temperature: modelConfig.temperature || 0.7,
             max_tokens: modelConfig.maxTokens || 1024,
-            api_url: modelConfig.url,  // 添加API URL
-            api_key: modelConfig.key   // 添加API Key
+            api_url: modelConfig.url,
+            api_key: modelConfig.key,
+            stream: true,
+            tools: webSearchEnabled ? [{
+                "type": "web_search",
+                "web_search": {
+                    "enable": true,
+                    "search_prompt": SEARCH_PROMPT,
+                    "search_result": true
+                }
+            }] : undefined
         };
-
-        const response = await fetch(`http://localhost:8000${endpoint}`, {
+        
+        const response = await fetch(`http://localhost:8000${endpoint}/stream`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestData)
+            body: JSON.stringify(requestData),
+
         });
 
         if (!response.ok) {
             throw new Error(`API请求失败: ${await response.text()}`);
         }
+        
+        chatSendBtn.textContent = '接收中...';
+        // 创建新的消息元素
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message assistant-message';
+        const contentDiv = document.createElement('div');
+        messageDiv.appendChild(contentDiv);
+        
+        // 获取当前模式下的消息容器
+        const isDocMode = document.querySelector('.mode-btn[data-mode="doc"]').classList.contains('active');
+        const messagesContainer = isDocMode ? 
+            document.querySelector('.doc-messages') : 
+            document.querySelector('.chat-mode-container .messages');
+        messagesContainer.appendChild(messageDiv);
+        
+        let fullContent = '';
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let hasDisplayedSearchResults = false;
+        let webSearchResults = null;  // 存储搜索结果
 
-        return await response.json();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    // 检查是否是结束标记
+                    if (line.trim() === 'data: [DONE]') {
+                        continue;
+                    }
+                    
+                    try {
+                        const data = JSON.parse(line.slice(5));
+                        
+                        // 处理网络搜索结果
+                        if (data.web_search && !hasDisplayedSearchResults) {
+                            hasDisplayedSearchResults = true;
+                            webSearchResults = data.web_search;  // 保存搜索结果
+                            const searchResultsDiv = document.createElement('div');
+                            searchResultsDiv.className = 'message assistant-message search-results';
+                            searchResultsDiv.innerHTML = `
+                                <div class="search-results-header">参考文献：</div>
+                                <div class="search-result-item">
+                                    ${data.web_search.map((result, index) => `
+                                        <div class="result-row">
+                                            <span class="result-ref">${result.refer}</span>
+                                            <a href="${result.icon}" target="_blank" class="source-link">
+                                                <img src="${result.icon}" class="source-icon" alt="${result.media}"/>
+                                            </a>
+                                            <span class="result-media">${result.media}</span>
+                                            <a href="${result.link}" target="_blank" class="result-link">
+                                                ${result.title}
+                                            </a>
+                                            <details class="result-details">
+                                                <summary>展开内容</summary>
+                                                <div class="result-content">
+                                                    ${result.content}
+                                                </div>
+                                            </details>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                            messagesContainer.appendChild(searchResultsDiv);
+                        }
+
+                        // 处理模型回复
+                        if (data.choices && data.choices[0].delta?.content) {
+                            const content = data.choices[0].delta.content;
+                            
+                            if (!contentDiv) {
+                                contentDiv = document.createElement('div');
+                                contentDiv.className = 'message assistant-message';
+                                messagesContainer.appendChild(contentDiv);
+                            }
+                            
+                            fullContent += content;
+                            contentDiv.innerHTML = marked.parse(fullContent);
+                            
+                            // 立即为新渲染的代码块添加复制按钮
+                            contentDiv.querySelectorAll('pre code').forEach(codeBlock => {
+                                // 检查是否已经有复制按钮
+                                if (!codeBlock.nextSibling || !codeBlock.nextSibling.classList?.contains('copy-code-btn')) {
+                                    const copyButton = document.createElement('button');
+                                    copyButton.textContent = '复制';
+                                    copyButton.classList.add('copy-code-btn');
+                                    
+                                    // 将按钮插入到代码块后面
+                                    codeBlock.parentNode.insertBefore(copyButton, codeBlock.nextSibling);
+                                    
+                                    // 添加点击事件
+                                    copyButton.onclick = () => {
+                                        navigator.clipboard.writeText(codeBlock.innerText)
+                                            .then(() => {
+                                                copyButton.textContent = '复制成功!';
+                                                setTimeout(() => {
+                                                    copyButton.textContent = '复制';
+                                                }, 1000);
+                                            })
+                                            .catch(err => {
+                                                console.error('复制失败', err);
+                                                copyButton.textContent = '复制失败!';
+                                            });
+                                    };
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        // 忽略 [DONE] 消息的解析错误
+                        if (!line.includes('[DONE]')) {
+                            console.error('解析响应数据失败:', error);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 保存完整的消息到历史记录
+        const currentChat = chatManager.getCurrentChat();
+        if (currentChat) {
+            currentChat.messages.push({
+                content: fullContent,
+                isUser: false,
+                timestamp: Date.now(),
+                web_search: webSearchResults  // 添加搜索结果到消息对象
+            });
+            chatManager.saveChats();
+        }
+        
+        return;
+
     } catch (error) {
         console.error('发送消息失败:', error);
-        throw error;
+        chatManager.addMessage('抱歉，发生了错误，请稍后重试。', false);
     }
 }
 // 在 script 标签中添加文件上传预览功能
@@ -694,7 +1038,7 @@ document.getElementById('fileUpload').addEventListener('change', function(e) {
 });
 
 // 在发送消息后清除预览
-// 在 sendBtn 的点击事件处理中，成功发送后添加：
+// 在 sendBtn 的点击事件处理中，成发送后添加：
 const existingPreview = document.querySelector('.file-preview');
 if (existingPreview) {
     existingPreview.remove();
@@ -709,7 +1053,7 @@ document.getElementById('modelMaxTokens').addEventListener('input', function(e) 
     document.getElementById('maxTokensValue').textContent = e.target.value;
 });
 
-// 添加模式切换按钮的事件监听
+// 修改模式切换按钮的事件监听
 document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const mode = btn.dataset.mode;
@@ -723,22 +1067,23 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
             document.querySelector('.doc-chat-area').style.display = 'flex';
             
             const docSendBtn = document.querySelector('.doc-chat-area .send-btn');
-            const docTextarea = document.querySelector('.doc-chat-area textarea');
+            const docTextarea = document.querySelector('.doc-textarea');
             
             docSendBtn.onclick = async () => {
                 const message = docTextarea.value.trim();
                 if (message) {
+                    // 保存用户输入到聊天历史
                     chatManager.addMessage(message, true);
                     docTextarea.value = '';
                     
                     try {
-                        const response = await sendMessageToAPI(message);
-                        if (response && response.choices && response.choices[0]) {
-                            const assistantMessage = response.choices[0].message.content;
-                            chatManager.addMessage(assistantMessage, false);
-                        }
+                        await sendMessageToAPI(message);
                     } catch (error) {
-                        console.error('发送消息失败:', error);
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'message assistant-message';
+                        errorDiv.textContent = '抱歉，发生了错误，请稍后重试。';
+                        document.querySelector('.doc-messages').appendChild(errorDiv);
+                        // 保存错误消息到聊天历史
                         chatManager.addMessage('抱歉，发生了错误，请稍后重试。', false);
                     }
                 }
@@ -752,7 +1097,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
             document.querySelector('.doc-chat-area').style.display = 'none';
             
             const chatSendBtn = document.querySelector('.chat-mode-container .send-btn');
-            const chatTextarea = document.querySelector('.chat-mode-container textarea');
+            const chatTextarea = document.querySelector('.chat-textarea');
             
             chatSendBtn.onclick = async () => {
                 const message = chatTextarea.value.trim();
@@ -766,11 +1111,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
                     chatTextarea.value = '';
                     if (fileInput) fileInput.value = '';
                     
-                    const response = await sendMessageToAPI(message, file);
-                    if (response && response.choices && response.choices[0]) {
-                        const assistantMessage = response.choices[0].message.content;
-                        chatManager.addMessage(assistantMessage, false);
-                    }
+                    await sendMessageToAPI(message, file);
                 } catch (error) {
                     console.error('发送消息失败:', error);
                     chatManager.addMessage('抱歉，发生了错误，请稍后重试。', false);
@@ -781,6 +1122,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
         }
     });
 });
+// 添加中断控制器
 
 // 初始化发送按钮状态的函数
 function initializeSendButtons() {
@@ -828,15 +1170,35 @@ function initializeSendButtons() {
         const message = chatTextarea.value.trim();
         const fileInput = document.getElementById('fileUpload');
         const file = fileInput?.files[0];
-        
+
+
+
         if (!message && !file) return;
         
         try {
             chatManager.addMessage(message, true, file);
             chatTextarea.value = '';
             if (fileInput) fileInput.value = '';
-            
-            const response = await sendMessageToAPI(message, file);
+            // 找到并移除预览框
+            const inputArea = document.querySelector('.chat-mode-container .input-area');
+            const preview = inputArea.querySelector('.file-preview');
+            if (preview) {
+                inputArea.removeChild(preview);
+            }
+
+             // 切换按钮状态为"发送中"
+            chatSendBtn.textContent = '发送中';
+            chatSendBtn.disabled = true; // 禁用按钮
+
+
+
+            const response = await sendMessageToAPI(message, file,chatSendBtn);
+
+            // 恢复按钮状态
+            chatSendBtn.textContent = '发送';
+            chatSendBtn.disabled = false; // 重新启用按钮
+
+
             if (response && response.choices && response.choices[0]) {
                 const assistantMessage = response.choices[0].message.content;
                 chatManager.addMessage(assistantMessage, false);
@@ -850,4 +1212,29 @@ function initializeSendButtons() {
     // 禁用文档模式的发送按钮
     const docSendBtn = document.querySelector('.doc-chat-area .send-btn');
     docSendBtn.onclick = null;
+}
+
+// 添加网络搜索开关事件监听
+document.getElementById('searchToggle').addEventListener('change', function(e) {
+    const isEnabled = e.target.checked;
+    const tooltip = document.querySelector('.toggle-label .tooltip');
+    if (tooltip) {
+        tooltip.textContent = isEnabled ? '关闭网络搜索' : '开启网络搜索';
+    }
+});
+
+// 添加复制代码功能
+function copyCode(button) {
+    const codeBlock = button.closest('.code-block-container').querySelector('code');
+    const text = codeBlock.textContent;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '已复制！';
+        setTimeout(() => {
+            button.textContent = originalText;
+        }, 2000);
+    }).catch(err => {
+        console.error('复制失败:', err);
+    });
 }

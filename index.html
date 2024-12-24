@@ -10,6 +10,12 @@
     <div class="container">
         <!-- 侧边栏 -->
         <div class="sidebar">
+            <!-- 添加切换按钮 -->
+            <button class="toggle-sidebar-btn" title="收起侧边栏">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
             <!-- 建聊天按钮 -->
             <button class="new-chat-btn">
                 <span>新建聊天</span>
@@ -192,7 +198,7 @@
                     <div class="messages doc-messages"></div>
                     <div class="input-area doc-input-area">
                         <div class="input-box">
-                            <textarea placeholder="输入修改建议..." rows="1"></textarea>
+                            <textarea class="doc-textarea" placeholder="输入修改建议..." rows="1"></textarea>
                             <button class="send-btn">发送</button>
                         </div>
                     </div>
@@ -215,6 +221,16 @@
                                     <path d="M16 5h6v6"></path>
                                     <path d="M8 12l8-8"></path>
                                 </svg>
+                            </label>
+                        </div>
+                        <div class="search-toggle">
+                            <input type="checkbox" id="searchToggle" class="toggle-input">
+                            <label for="searchToggle" class="toggle-label">
+                                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <span class="tooltip">开启网络搜索</span>
                             </label>
                         </div>
                         <textarea placeholder="输入消息..." rows="1"></textarea>

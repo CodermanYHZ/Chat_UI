@@ -10,6 +10,8 @@ import logging
 import shutil
 from datetime import datetime
 import uuid
+from fastapi.responses import StreamingResponse
+import asyncio
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +48,22 @@ class ChatRequest(BaseModel):
     stream: Optional[bool] = False
     api_url: str
     api_key: str
+    tools: Optional[List[Dict[str, Any]]] = None
+
+# 添加搜索提示模板
+# SEARCH_PROMPT = """
+# # 以下是来自互联网的信息：
+# {search_result}
+
+# # 当前日期: {current_date}
+
+# # 要求：
+# 1. 仅使用上述参考信息回答问题
+# 2. 每个陈述必须在句末标注来源，使用[ref_序号]格式
+# 3. 如果信息不足，告知用户"抱歉，没有找到相关信息"
+# 4. 保持回答的准确性和时效性
+
+# """
 
 # 定义请求模型
 class ModelConfig(BaseModel):
@@ -243,6 +261,130 @@ async def upload_file(file: UploadFile = File(...)):
         }
     except Exception as e:
         print(f"文件上传失败: {str(e)}")  # 添加错误日志
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat/completions/stream")
+async def chat_completion_stream(request_data: ChatRequest):
+    try:
+        logger.info("收到流式聊天请求")
+        
+        # 打印完整的请求数据（去除敏感信息）
+        safe_request = {
+            "model": request_data.model,
+            "messages": [msg.dict() for msg in request_data.messages],
+            "temperature": request_data.temperature,
+            "max_tokens": request_data.max_tokens,
+            "stream": True
+        }
+        logger.info(f"收到流式聊天请求，请求数据: {json.dumps(safe_request, ensure_ascii=False, indent=2)}")
+        
+        async def generate():
+            try:
+                url = request_data.api_url
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {request_data.api_key}"
+                }
+                
+                # 构建请求数据
+                model_request = {
+                    "model": request_data.model,
+                    "messages": [msg.dict() for msg in request_data.messages],
+                    "temperature": request_data.temperature,
+                    "max_tokens": request_data.max_tokens,
+                    "stream": True,
+                }
+                
+                # 只在启用网络搜索时添加 tools 参数
+                if request_data.tools:
+                    model_request["tools"] = request_data.tools
+                    # # 添加搜索提示
+                    # current_date = datetime.now().strftime("%Y-%m-%d")
+                    # # 获取用户最后一条消息作为问题
+                    # model_request["search_prompt"] = SEARCH_PROMPT.format(
+                    #     search_result="{search_result}",
+                    #     current_date=current_date
+                    # )
+                
+                logger.info(f"发送到模型的请求: {json.dumps(model_request, ensure_ascii=False, indent=2)}")
+                
+                async with httpx.AsyncClient() as client:
+                    async with client.stream('POST', url, 
+                        json=model_request,  # 使用构建好的请求数据
+                        headers=headers
+                    ) as response:
+                        async for line in response.aiter_lines():
+                            if line.startswith('data: '):
+                                # 检查是否是结束标记
+                                if line.strip() == 'data: [DONE]':
+                                    logger.info("收到结束标记 [DONE]")
+                                    continue
+                                
+                                # 解析并验证数据
+                                try:
+                                    data = json.loads(line[6:])
+                                    if not isinstance(data, dict):
+                                        logger.warning(f"收到非字典数据: {line[6:]}")
+                                        continue
+                                except json.JSONDecodeError:
+                                    logger.warning(f"JSON解析失败: {line[6:]}")
+                                    continue
+                                
+                                # 只转发有效的消息内容
+                                if 'choices' in data and data['choices'] and 'delta' in data['choices'][0]:
+                                    logger.debug(f"转发消息: {line[6:]}")
+                                    yield f'data: {line[6:]}\n\n'
+            except Exception as e:
+                logger.error(f"流式处理失败: {str(e)}")
+                yield f'data: {{"error": "{str(e)}"}}\n\n'
+            
+        return StreamingResponse(
+            generate(),
+            media_type='text/event-stream'
+        )
+            
+    except Exception as e:
+        logger.error(f"处理流式请求失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat/vision/stream")
+async def chat_vision_stream(request_data: ChatRequest):
+    try:
+        logger.info("收到流式视觉聊天请求")
+        
+        async def generate():
+            try:
+                url = request_data.api_url
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {request_data.api_key}"
+                }
+                
+                async with httpx.AsyncClient() as client:
+                    async with client.stream('POST', url, 
+                        json={
+                            "model": request_data.model,
+                            "messages": [msg.dict() for msg in request_data.messages],
+                            "temperature": request_data.temperature,
+                            "max_tokens": request_data.max_tokens,
+                            "stream": True
+                        },
+                        headers=headers
+                    ) as response:
+                        async for line in response.aiter_lines():
+                            if line.startswith('data: '):
+                                yield f'data: {line[6:]}\n\n'
+            except Exception as e:
+                logger.error(f"流式处理失败: {str(e)}")
+                yield f'data: {{"error": "{str(e)}"}}\n\n'
+            
+        return StreamingResponse(
+            generate(),
+            media_type='text/event-stream'
+        )
+            
+    except Exception as e:
+        logger.error(f"处理流式视觉请求失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
