@@ -9,6 +9,7 @@ class ModelManager {
     async init() {
         await this.loadConfig();
         this.updateModelSelect();
+        this.renderModelList(this.models);
     }
 
     // 添加自定义模型
@@ -47,7 +48,7 @@ class ModelManager {
         this.models.push(newModel);
         await this.saveConfig();
         this.updateModelSelect();
-        this.renderModelList();
+        this.renderModelList(this.models);
 
         // 清空表单
         document.getElementById('modelName').value = '';
@@ -72,7 +73,7 @@ class ModelManager {
             }
             await this.saveConfig();
             this.updateModelSelect();
-            this.renderModelList();
+            this.renderModelList(this.models);
         }
     }
 
@@ -88,11 +89,12 @@ class ModelManager {
             modelItem.className = 'model-item';
             modelItem.innerHTML = `
                 <div class="model-info">
-                    <div>${model.name}</div>
-                    <div style="font-size: 12px; color: #666;">${model.description || ''}</div>
+                    <div class="model-name">${model.name}</div>
+                    <div class="model-description">${model.description || ''}</div>
                 </div>
                 <div class="model-actions">
                     ${model.provider === 'custom' ? `
+                        <button class="edit-model-btn" onclick="modelManager.editModel('${model.id}')">编辑</button>
                         <button class="delete-model-btn" onclick="modelManager.deleteCustomModel('${model.id}')">删除</button>
                     ` : ''}
                 </div>
@@ -177,4 +179,89 @@ class ModelManager {
             console.error('保存模型配置失败:', error);
         }
     }
+
+    // 编辑模型的函数
+    editModel(modelId) {
+        console.log(`编辑模型 ID: ${modelId}`);
+        const model = this.getModelConfig(modelId);
+        if (model) {
+            // 打开添加模型对话框
+            const addModelDialog = document.querySelector('.add-model-dialog');
+            if (addModelDialog) {
+                // 填充表单数据
+                document.getElementById('modelId').value = model.id;
+                document.getElementById('modelName').value = model.name;
+                document.getElementById('modelUrl').value = model.url;
+                document.getElementById('modelKey').value = model.key;
+                document.getElementById('modelTemperature').value = model.temperature || 0.7;
+                document.getElementById('modelMaxTokens').value = model.maxTokens || 1024;
+
+                // 更新滑块显示的值
+                document.getElementById('temperatureValue').textContent = model.temperature || 0.7;
+                document.getElementById('maxTokensValue').textContent = model.maxTokens || 1024;
+
+                // 显示对话框
+                addModelDialog.style.display = 'flex';
+
+                // 修改保存按钮的行为
+                const saveButton = addModelDialog.querySelector('.save-model-btn');
+                if (saveButton) {
+                    // 移除之前的事件监听器
+                    const newSaveButton = saveButton.cloneNode(true);
+                    saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+
+                    // 添加新的事件监听器
+                    newSaveButton.addEventListener('click', async () => {
+                        // 获取更新后的值
+                        const updatedModel = {
+                            id: document.getElementById('modelId').value,
+                            name: document.getElementById('modelName').value,
+                            url: document.getElementById('modelUrl').value,
+                            key: document.getElementById('modelKey').value,
+                            temperature: parseFloat(document.getElementById('modelTemperature').value),
+                            maxTokens: parseInt(document.getElementById('modelMaxTokens').value),
+                            description: `自定义模型: ${document.getElementById('modelName').value}`,
+                            provider: 'custom'
+                        };
+
+                        // 更新模型
+                        const index = this.models.findIndex(m => m.id === modelId);
+                        if (index !== -1) {
+                            this.models[index] = updatedModel;
+                            await this.saveConfig();
+                            this.updateModelSelect();
+                            this.renderModelList();
+                        }
+
+                        // 关闭对话框
+                        addModelDialog.style.display = 'none';
+                    });
+                }
+            }
+        } else {
+            console.error(`未找到模型 ID: ${modelId}`);
+        }
+    }
+}
+
+// 添加编辑按钮的函数
+function addEditButton(modelId) {
+    const editButton = document.createElement('button');
+    editButton.innerText = '编辑';
+    editButton.onclick = function() {
+        editModel(modelId);
+    };
+    return editButton;
+}
+
+// 在模型列表中添加编辑按钮
+function renderModelList(models) {
+    const modelListContainer = document.getElementById('modelList');
+    modelListContainer.innerHTML = ''; // 清空现有列表
+    models.forEach(model => {
+        const modelItem = document.createElement('div');
+        modelItem.innerText = model.name;
+        modelItem.appendChild(addEditButton(model.id)); // 添加编辑按钮
+        modelListContainer.appendChild(modelItem);
+    });
 }

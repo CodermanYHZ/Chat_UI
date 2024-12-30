@@ -367,8 +367,10 @@ textarea {
 .settings-content {
     background: white;
     border-radius: 8px;
-    width: 400px;
-    max-width: 90%;
+    width: 600px; /* 增加宽度 */
+    max-width: 95%;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .settings-header {
@@ -691,35 +693,44 @@ textarea {
     margin: 1rem 0;
     border: 1px solid #e5e5e5;
     border-radius: 4px;
-    max-height: 300px;
+    max-height: 400px; /* 增加最大高度 */
     overflow-y: auto;
 }
 
 .model-item {
     padding: 1rem;
     border-bottom: 1px solid #e5e5e5;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto; /* 两列布局：信息区和操作区 */
+    gap: 1rem;
     align-items: center;
 }
 
 .model-info {
-    flex: 1;
-    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .model-actions {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
 }
 
 .edit-model-btn,
 .delete-model-btn {
-    padding: 0.25rem 0.5rem;
-    border: none;
+    padding: 6px 12px;  /* 统一内边距 */
+    border: 1px solid transparent;  /* 添加边框 */
     border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 0.875rem;
+    min-width: 70px;  /* 统一最小宽度 */
+    height: 32px;     /* 统一高度 */
+    display: inline-flex;  /* 使用 flex 布局确保内容居中 */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
 .edit-model-btn {
@@ -760,7 +771,7 @@ textarea {
 
 /* Markdown 样式 */
 .assistant-message {
-    line-height: 1.6;
+    line-height: 1.2;
 }
 
 .assistant-message h1,
@@ -791,7 +802,7 @@ textarea {
 
 .assistant-message pre {
     position: relative;
-    margin: 1em 0;
+    margin: 0.5em 0;
     padding: 1em;
     background: #f6f8fa;
     border-radius: 4px;
@@ -2176,19 +2187,65 @@ body[data-mode="doc"] .doc-mode-container {
     font-family: monospace;
 }
 
-/* 复制按钮样式 */
-.copy-button {
-    padding: 4px 8px;
-    font-size: 0.875rem;
-    color: #495057;
-    background: white;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
+/* 确保消息文本容器有相对定位 */
+.message-text {
+    position: relative;
+    margin-bottom: 24px; /* 为复制按钮留出空间 */
 }
 
-.copy-button:hover {
-    background: #f8f9fa;
-    border-color: #adb5bd;
+/* 消息复制按钮样式 */
+.message-copy-btn {
+    position: absolute;
+    bottom: -24px; /* 放在文本下方 */
+    left: 0;      /* 与文本左对齐 */
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    color: #666;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.message-copy-btn:hover {
+    background: #f5f5f5;
+}
+
+/* 添加工具提示 */
+.message-copy-btn::after {
+    content: '复制回复';
+    position: absolute;
+    left: 50%;
+    bottom: -25px; /* 工具提示显示在按钮下方 */
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+.message-copy-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .message-copy-btn {
+    color: #999;
+}
+
+[data-theme="dark"] .message-copy-btn:hover {
+    background: #40414f;
+    color: #fff;
 }

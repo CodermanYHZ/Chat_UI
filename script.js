@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 新建聊天按钮事件
     if (newChatBtn) {
-        console.log('添加新建聊天按钮事��监听器');
+        console.log('添加新建聊天按钮事件监听器');
         newChatBtn.onclick = () => {
             console.log('点击新建聊天按钮');
             chatManager.createNewChat();
@@ -184,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 清空输入
             textarea.value = '';
             fileInput.value = '';
-            
             // 移除文件预览
             const existingPreview = document.querySelector('.file-preview');
             if (existingPreview) {
@@ -305,7 +304,7 @@ class ChatManager {
     async addMessage(content, isUser = true, file = null) {
         const currentChat = this.getCurrentChat();
         if (currentChat) {
-            // 创建基本���息对象
+            // 创建基本息对象
             const message = {
                 content,
                 isUser,
@@ -430,17 +429,37 @@ class ChatManager {
                 }
 
                 // 渲染消息文本内容
+
                 if (msg.content) {
                     const textElement = document.createElement('div');
                     textElement.className = 'message-text';
                     if (msg.isUser) {
                         textElement.textContent = msg.content;
                     } else {
-                        textElement.innerHTML = marked.parse(msg.content);
+                        textElement.innerHTML = marked.parse(msg.content);               
+                        // 为API回复添加复制按钮
+                        const copyButton = document.createElement('button');
+                        copyButton.className = 'message-copy-btn';
+                        copyButton.innerHTML = `
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        `;
+                        copyButton.onclick = () => {
+                            navigator.clipboard.writeText(msg.content).then(() => {
+                                // 只改变图标颜色来表示复制成功
+                                copyButton.style.color = '#10a37f';
+                                setTimeout(() => {
+                                    copyButton.style.color = '';
+                                }, 2000);
+                            });
+                        };
+                        textElement.appendChild(copyButton);
                     }
                     contentContainer.appendChild(textElement);
                 }
-
+  
                 // 将内容容器添加到消息div
                 messageDiv.appendChild(contentContainer);
                 messagesContainer.appendChild(messageDiv);
@@ -496,7 +515,7 @@ class ChatManager {
                                     }, 2000);
                                 })
                                 .catch(err => {
-                                    console.error('复��失败:', err);
+                                    console.error('复制失败:', err);
                                     copyButton.textContent = '复制失败!';
                                 });
                         };
@@ -564,7 +583,7 @@ class ChatManager {
                 content: fullContent,
                 isUser: false,
                 timestamp: Date.now(),
-                web_search: webSearchResults  // 将搜索结果添加��消息对象
+                web_search: webSearchResults  // 将搜索结果添加消息对象
             };
             
             currentChat.messages.push(message);
@@ -724,7 +743,7 @@ class ThemeManager {
 // 初始化主题管理器
 let themeManager;
 
-// 设置按钮点击事���
+// 设置按钮点击事件
 document.querySelector('.settings-btn').addEventListener('click', () => {
     document.querySelector('.settings-dialog').style.display = 'flex';
     modelManager.renderModelList();
@@ -953,6 +972,58 @@ async function sendMessageToAPI(message, file = null,chatSendBtn) {
                                     };
                                 }
                             });
+
+                            // 添加消息复制按钮（如果还没有添加）
+                            if (!contentDiv.querySelector('.message-copy-btn')) {
+                                const copyButton = document.createElement('button');
+                                copyButton.className = 'message-copy-btn';
+                                copyButton.innerHTML = `
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                `;
+                                
+                                // 直接设置按钮样式
+                                Object.assign(copyButton.style, {
+                                    position: 'absolute',
+                                    bottom: '-24px',
+                                    left: '0',
+                                    width: '24px',
+                                    height: '24px',
+                                    padding: '4px',
+                                    color: '#666',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s ease'
+                                });
+
+                                // 添加鼠标悬停效果
+                                copyButton.onmouseenter = () => {
+                                    copyButton.style.background = '#f5f5f5';
+                                };
+                                copyButton.onmouseleave = () => {
+                                    copyButton.style.background = 'transparent';
+                                };
+
+                                copyButton.onclick = () => {
+                                    navigator.clipboard.writeText(fullContent).then(() => {
+                                        copyButton.style.color = '#10a37f';
+                                        setTimeout(() => {
+                                            copyButton.style.color = '#666';
+                                        }, 2000);
+                                    });
+                                };
+
+                                // 确保父元素有相对定位
+                                contentDiv.style.position = 'relative';
+                                contentDiv.appendChild(copyButton);
+                            }
                         }
                     } catch (error) {
                         // 忽略 [DONE] 消息的解析错误
@@ -1238,3 +1309,57 @@ function copyCode(button) {
         console.error('复制失败:', err);
     });
 }
+
+// 修改事件监听函数
+function addEnterListener() {
+    const textarea = document.querySelector('.chat-mode-container .input-box textarea');
+    if (!textarea) return;
+
+    // 保存初始高度
+    const initialHeight = textarea.style.height;
+
+    textarea.addEventListener('keydown', function(e) {
+        // 检查是否按下了 Enter 键且没有按住 Shift 键
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // 阻止默认的换行行为
+            
+            const sendBtn = document.querySelector('.chat-mode-container .send-btn');
+            if (sendBtn && !sendBtn.disabled) {
+                sendBtn.click();
+                // 重置文本框高度
+                this.style.height = initialHeight || '50px';  // 使用初始高度或默认值
+                this.style.overflowY = 'hidden';
+            }
+        }
+    });
+
+    textarea.addEventListener('input', function() {
+        // 自动调整文本框高度
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        
+        // 限制最大高度
+        const maxHeight = 200;
+        if (this.scrollHeight > maxHeight) {
+            this.style.height = maxHeight + 'px';
+            this.style.overflowY = 'auto';
+        } else {
+            this.style.overflowY = 'hidden';
+        }
+    });
+}
+
+// 确保在 DOM 加载完成后执行
+document.addEventListener('DOMContentLoaded', addEnterListener);
+
+// 添加发送按钮的点击事件监听
+document.querySelector('.chat-mode-container .send-btn').addEventListener('click', function() {
+    const textarea = document.querySelector('.chat-mode-container .input-box textarea');
+    if (textarea) {
+        // 发送后重置文本框高度
+        setTimeout(() => {
+            textarea.style.height = '50px';
+            textarea.style.overflowY = 'hidden';
+        }, 0);
+    }
+});

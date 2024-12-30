@@ -13,8 +13,26 @@ import uuid
 from fastapi.responses import StreamingResponse
 import asyncio
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
+# 创建日志目录
+LOG_DIR = "log"
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+# 获取当前时间作为日志文件名
+log_filename = os.path.join(LOG_DIR, f"api_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+
+# 配置日志格式，添加时间戳
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.FileHandler(log_filename, encoding='utf-8'),
+        logging.StreamHandler()  # 同时输出到控制台
+    ]
+)
+
+# 在代码中使用 logging 而不是 print
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
