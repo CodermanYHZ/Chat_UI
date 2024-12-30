@@ -51,6 +51,10 @@ python api.py
 ```bash
 index.html
 ```
+5. **或者一键运行**：
+```bash
+start.bat
+```
 ## 贡献
 欢迎大家参与到Chat_UI的开发中来。以下是几种贡献方式：
 - **提交issue**：如果你发现了bug或有新的功能建议，请提交issue。
